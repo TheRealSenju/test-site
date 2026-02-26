@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BeGE — The Hyperlocal Super-App</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                dark: "#0A0F0E",
+                light: "#F8F6F1",
+                green: "#005247",
+                "green-dark": "#003D34",
+                orange: "#F6931A",
+              },
+            },
+            fontFamily: {
+              syne: ["Syne", "sans-serif"],
+              sans: ["DM Sans", "sans-serif"],
+            },
+            animation: {
+              marquee: "marquee 40s linear infinite",
+              "marquee-reverse": "marquee-reverse 45s linear infinite",
+            },
+            keyframes: {
+              marquee: {
+                "0%": { transform: "translateX(0%)" },
+                "100%": { transform: "translateX(-100%)" },
+              },
+              "marquee-reverse": {
+                "0%": { transform: "translateX(-100%)" },
+                "100%": { transform: "translateX(0%)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "DM Sans", sans-serif;
+        background-color: #0a0f0e;
+        color: #f8f6f1;
+        overflow-x: hidden;
+      }
+      .font-syne {
+        font-family: "Syne", sans-serif;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .gradient-text {
+        background: linear-gradient(90deg, #f8f6f1 0%, #a3a3a3 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Smooth Testimonial Scrolling Container */
+      .marquee-container {
+        display: flex;
+        width: 200%;
+      }
+      .marquee-container:hover {
+        animation-play-state: paused;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+      const { motion, useAnimation } = window.Motion;
+
+      // --- Reusable SVG Icons (Replacing Lucide dependencies for pure standalone stability) ---
+      const IconCar = () => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+          <circle cx="7" cy="17" r="2" />
+          <path d="M9 17h6" />
+          <circle cx="17" cy="17" r="2" />
+        </svg>
+      );
+      const IconBox = () => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+          <path d="m3.3 7 8.7 5 8.7-5" />
+          <path d="M12 22V12" />
+        </svg>
+      );
+      const IconBag = () => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+      );
+      const IconCheck = () => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#F6931A"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      );
+      const IconArrowRight = () => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M5 12h14" />
+          <path d="m12 5 7 7-7 7" />
+        </svg>
+      );
+
+      // --- Sections ---
+
+      const Navbar = () => (
+        <nav className="fixed w-full z-50 bg-brand-dark/90 backdrop-blur-md border-b border-white/5 px-6 py-4">
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="text-3xl font-syne font-bold text-brand-green flex items-center gap-1">
+              BeGE<span className="text-brand-orange">.</span>
+            </div>
+            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-300">
+              <a href="#ride" className="hover:text-brand-orange transition-colors">
+                Ride
+              </a>
+              <a href="#delivery" className="hover:text-brand-orange transition-colors">
+                Delivery
+              </a>
+              <a href="#shop" className="hover:text-brand-orange transition-colors">
+                Shop
+              </a>
+              <a href="#about" className="hover:text-brand-orange transition-colors">
+                About
+              </a>
+              <a href="#partners" className="hover:text-brand-orange transition-colors">
+                Partners
+              </a>
+            </div>
+            <button className="px-5 py-2 rounded-full border border-brand-orange text-brand-orange font-bold text-sm hover:bg-brand-orange hover:text-brand-dark transition-all">
+              Get the App
+            </button>
+          </div>
+        </nav>
+      );
+
+      const Hero = () => {
+        const headline = "Rides. Deliveries. Commerce. All in One App.";
+        const words = headline.split(" ");
+
+        return (
+          <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+              <div className="z-10">
+                <motion.h1
+                  initial="hidden"
+                  animate="visible"
+                  variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+                  className="text-5xl md:text-7xl font-syne font-bold leading-[1.1] mb-6 gradient-text"
+                >
+                  {words.map((word, i) => (
+                    <motion.span
+                      key={i}
+                      className="inline-block mr-3"
+                      variants={{
+                        hidden: { opacity: 0, y: 40 },
+                        visible: {
+                          opacity: 1,
+                          y: 0,
+                          transition: { type: "spring", damping: 12, stiffness: 100 },
+                        },
+                      }}
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="text-lg md:text-xl text-gray-400 mb-8 max-w-lg leading-relaxed"
+                >
+                  The hyperlocal super-app powering your everyday life. Move freely, send parcels
+                  instantly, and shop local merchants — powered by deep tech and African rhythm.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 }}
+                  className="flex flex-wrap gap-4"
+                >
+                  <button className="bg-brand-orange text-brand-dark px-8 py-4 rounded-full font-bold text-lg hover:bg-orange-400 transition-all flex items-center gap-2">
+                    Download App <IconArrowRight />
+                  </button>
+                  <button className="border-2 border-brand-green text-brand-light px-8 py-4 rounded-full font-bold text-lg hover:bg-brand-green/20 transition-all">
+                    Explore Services
+                  </button>
+                </motion.div>
+              </div>
+
+              {/* Floating Phone Mockup */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 1, delay: 0.5 }}
+                className="relative flex justify-center lg:justify-end"
+              >
+                <div className="relative w-[280px] h-[580px] bg-brand-dark border-[8px] border-gray-800 rounded-[3rem] shadow-2xl shadow-brand-green/20 overflow-hidden flex flex-col">
+                  <div className="absolute top-0 w-full h-6 bg-gray-800 rounded-b-3xl flex justify-center z-20">
+                    <div className="w-1/3 h-4 bg-brand-dark rounded-b-xl"></div>
+                  </div>
+                  <div className="flex-1 bg-gradient-to-b from-brand-green-dark to-brand-dark p-4 pt-12 relative z-10">
+                    <div className="w-full h-32 bg-white/5 rounded-2xl mb-4 border border-white/10 p-4">
+                      <div className="w-12 h-12 bg-brand-green rounded-full mb-3"></div>
+                      <div className="w-3/4 h-3 bg-white/20 rounded mb-2"></div>
+                      <div className="w-1/2 h-3 bg-white/10 rounded"></div>
+                    </div>
+                    <div className="w-full h-24 bg-brand-orange/20 rounded-2xl mb-4 border border-brand-orange/30"></div>
+                    <div className="w-full h-48 bg-white/5 rounded-2xl border border-white/10"></div>
+                  </div>
+                </div>
+
+                {/* Decorative background blur */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand-green rounded-full mix-blend-screen filter blur-[120px] opacity-40 -z-10"></div>
+              </motion.div>
+            </div>
+          </section>
+        );
+      };
+
+      const Services = () => {
+        const services = [
+          {
+            id: "ride",
+            icon: <IconCar />,
+            name: "BeGE Ride",
+            tag: "Mobility",
+            desc: "Efficient, safe, and affordable ride-hailing with real-time tracking.",
+          },
+          {
+            id: "delivery",
+            icon: <IconBox />,
+            name: "BeGE Delivery",
+            tag: "Logistics",
+            desc: "On-demand parcel and business delivery with proof-of-delivery and smart routing.",
+          },
+          {
+            id: "shop",
+            icon: <IconBag />,
+            name: "BeGE Shop",
+            tag: "Commerce",
+            desc: "A marketplace where merchants sell online with logistics integrated from day one.",
+          },
+        ];
+
+        return (
+          <section className="py-24 bg-brand-light text-brand-dark px-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-8">
+                {services.map((svc, i) => (
+                  <motion.div
+                    key={svc.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.2 }}
+                    className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 border-l-4 border-l-brand-orange group cursor-pointer"
+                  >
+                    <div className="w-16 h-16 bg-brand-green/10 text-brand-green rounded-xl flex items-center justify-center mb-6 group-hover:bg-brand-green group-hover:text-white transition-colors">
+                      {svc.icon}
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-brand-orange mb-2 block">
+                      {svc.tag}
+                    </span>
+                    <h3 className="text-2xl font-syne font-bold mb-3">{svc.name}</h3>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{svc.desc}</p>
+                    <a
+                      href={`#${svc.id}`}
+                      className="inline-flex items-center text-brand-orange font-bold hover:gap-2 transition-all"
+                    >
+                      Learn More{" "}
+                      <span className="ml-1 group-hover:ml-2 transition-all">
+                        <IconArrowRight />
+                      </span>
+                    </a>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      };
+
+      const Stats = () => (
+        <section className="bg-brand-green py-16 px-6 border-y border-white/10">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/20">
+            {[
+              { num: "10,000+", label: "Rides Completed" },
+              { num: "500+", label: "Active Merchants" },
+              { num: "24/7", label: "Customer Support" },
+              { num: "3", label: "Major Cities" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center px-4">
+                <h4 className="text-4xl md:text-5xl font-syne font-bold text-brand-orange mb-2">
+                  {stat.num}
+                </h4>
+                <p className="text-white/80 font-medium text-sm md:text-base">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+
+      const WhyBeGE = () => {
+        return (
+          <section className="py-24 bg-brand-light text-brand-dark px-6 overflow-hidden">
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-syne font-bold mb-6 leading-tight">
+                  One App.
+                  <br />
+                  Endless Possibilities.
+                </h2>
+                <p className="text-lg text-gray-600 mb-8">
+                  We didn’t just build an app; we built an ecosystem. BeGE connects the dots of your
+                  daily life with seamless technology designed for the African context.
+                </p>
+
+                <ul className="space-y-6">
+                  {[
+                    "Unified Wallet System for seamless payments across all services.",
+                    "Vetted Drivers & Agents ensuring safety and premium service.",
+                    "Hyperlocal Merchant Directory connecting you to neighborhood stores.",
+                    "Real-time Tracking from ride pickup to parcel delivery.",
+                  ].map((feature, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="flex items-start gap-4"
+                    >
+                      <div className="mt-1">
+                        <IconCheck />
+                      </div>
+                      <span className="text-lg font-medium text-gray-800">{feature}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="relative h-[500px] w-full flex items-center justify-center">
+                {/* Abstract Geometric Art */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                  className="absolute w-[300px] h-[300px] bg-brand-orange rounded-full mix-blend-multiply opacity-80 filter blur-xl"
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+                  className="absolute w-[350px] h-[350px] bg-brand-green rounded-3xl mix-blend-multiply opacity-80 filter blur-xl translate-x-10 translate-y-10"
+                />
+
+                {/* Stacked Cards */}
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  className="absolute z-10 bg-white p-6 rounded-2xl shadow-2xl w-64 -translate-x-12 -translate-y-12 border border-gray-100"
+                >
+                  <div className="h-4 w-20 bg-brand-orange/20 rounded mb-4"></div>
+                  <div className="h-3 w-full bg-gray-100 rounded mb-2"></div>
+                  <div className="h-3 w-4/5 bg-gray-100 rounded"></div>
+                </motion.div>
+                <motion.div
+                  initial={{ y: 50, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="absolute z-20 bg-brand-dark p-6 rounded-2xl shadow-2xl w-72 translate-x-12 translate-y-12 border border-white/10"
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-10 h-10 bg-brand-green rounded-full flex items-center justify-center text-white">
+                      <IconCar />
+                    </div>
+                    <div>
+                      <div className="h-3 w-24 bg-white/20 rounded mb-2"></div>
+                      <div className="h-2 w-16 bg-brand-orange/50 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded overflow-hidden">
+                    <div className="w-2/3 h-full bg-brand-green rounded"></div>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </section>
+        );
+      };
+
+      const Testimonials = () => {
+        const testimonials = [
+          {
+            name: "Amara Diallo",
+            city: "Lagos",
+            role: "Daily Commuter",
+            text: "BeGE Ride is incredibly reliable. I use it daily to beat traffic, and the drivers are always professional.",
+            img: "women/44.jpg",
+          },
+          {
+            name: "Kwame Osei",
+            city: "Accra",
+            role: "Small Business Owner",
+            text: "Since using BeGE Delivery, my customer complaints dropped to zero. The smart routing is a game changer for my bakery.",
+            img: "men/32.jpg",
+          },
+          {
+            name: "Fatou Sow",
+            city: "Dakar",
+            role: "Merchant",
+            text: "BeGE Shop connected me to hundreds of new buyers. The fact that delivery is integrated means I just focus on selling.",
+            img: "women/68.jpg",
+          },
+          {
+            name: "Chidi Eze",
+            city: "Enugu",
+            role: "Logistics Manager",
+            text: "The proof-of-delivery feature gives us peace of mind. Highly recommend the business dashboard.",
+            img: "men/46.jpg",
+          },
+          {
+            name: "Nia Kimani",
+            city: "Nairobi",
+            role: "University Student",
+            text: "Affordable and fast. Whether I'm ordering lunch or grabbing a ride to campus, it just works perfectly.",
+            img: "women/22.jpg",
+          },
+          {
+            name: "Tariq Mensah",
+            city: "Kumasi",
+            role: "E-commerce Seller",
+            text: "Setting up my store on BeGE took less than 10 minutes. The interface is intuitive and payments clear instantly.",
+            img: "men/11.jpg",
+          },
+          {
+            name: "Zainab Aliyu",
+            city: "Kano",
+            role: "Restaurant Owner",
+            text: "Our food deliveries are faster. The drivers understand the city routes better than any other app we've tried.",
+            img: "women/8.jpg",
+          },
+          {
+            name: "Samuel Ojo",
+            city: "Ibadan",
+            role: "Freelancer",
+            text: "I send documents and packages across the city securely. The real-time tracking link is brilliant.",
+            img: "men/75.jpg",
+          },
+          {
+            name: "Aissatou Bah",
+            city: "Abidjan",
+            role: "Market Vendor",
+            text: "I love the wallet feature. It helps me manage my daily earnings and pay for rides seamlessly.",
+            img: "women/14.jpg",
+          },
+        ];
+
+        const TestimonialCard = ({ t }) => (
+          <div className="w-[350px] flex-shrink-0 bg-brand-green border border-white/10 p-6 rounded-2xl mx-3">
+            <p className="text-brand-light/90 text-lg mb-6 leading-relaxed">"{t.text}"</p>
+            <div className="flex items-center gap-4">
+              <img
+                src={`https://randomuser.me/api/portraits/${t.img}`}
+                alt={t.name}
+                className="w-12 h-12 rounded-full border-2 border-brand-orange object-cover"
+              />
+              <div>
+                <h5 className="font-bold text-white font-syne">{t.name}</h5>
+                <p className="text-sm text-brand-orange">
+                  {t.role}, {t.city}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+        return (
+          <section className="py-24 bg-brand-green-dark overflow-hidden relative">
+            <div className="text-center mb-16 px-6">
+              <h2 className="text-4xl md:text-5xl font-syne font-bold text-white">
+                Trusted Across the City
+              </h2>
+            </div>
+
+            {/* Marquee Row 1 */}
+            <div className="flex animate-marquee mb-6 marquee-container">
+              {testimonials.slice(0, 5).map((t, i) => (
+                <TestimonialCard key={`top-${i}`} t={t} />
+              ))}
+              {testimonials.slice(0, 5).map((t, i) => (
+                <TestimonialCard key={`top-dup-${i}`} t={t} />
+              ))}
+            </div>
+
+            {/* Marquee Row 2 (Reverse) */}
+            <div className="flex animate-marquee-reverse marquee-container">
+              {testimonials.slice(4, 9).map((t, i) => (
+                <TestimonialCard key={`bot-${i}`} t={t} />
+              ))}
+              {testimonials.slice(4, 9).map((t, i) => (
+                <TestimonialCard key={`bot-dup-${i}`} t={t} />
+              ))}
+            </div>
+          </section>
+        );
+      };
+
+      const CTASplit = () => (
+        <section className="flex flex-col md:flex-row">
+          <div className="w-full md:w-1/2 bg-brand-green p-16 md:p-24 flex flex-col justify-center items-start border-r border-white/10">
+            <h2 className="text-4xl md:text-5xl font-syne font-bold text-white mb-6">
+              Are you ready to experience BeGE?
+            </h2>
+            <p className="text-brand-light/80 mb-8 text-lg">
+              Join thousands of users enjoying seamless rides, fast deliveries, and local shopping.
+            </p>
+            <div className="flex gap-4">
+              <button className="bg-brand-dark text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-colors border border-white/10 shadow-lg">
+                App Store
+              </button>
+              <button className="bg-brand-dark text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-colors border border-white/10 shadow-lg">
+                Google Play
+              </button>
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 bg-brand-orange p-16 md:p-24 flex flex-col justify-center items-start text-brand-dark">
+            <h2 className="text-4xl md:text-5xl font-syne font-bold mb-6">Become a BeGE Partner</h2>
+            <p className="text-brand-dark/80 mb-8 text-lg font-medium">
+              Drive with us, deliver with us, or sell on our marketplace. Grow your income today.
+            </p>
+            <button className="bg-brand-dark text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition-all shadow-xl">
+              Apply Now
+            </button>
+          </div>
+        </section>
+      );
+
+      const Footer = () => (
+        <footer className="bg-brand-dark pt-20 pb-10 px-6 border-t border-white/5">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div className="md:col-span-2">
+              <div className="text-3xl font-syne font-bold text-brand-green flex items-center gap-1 mb-4">
+                BeGE<span className="text-brand-orange">.</span>
+              </div>
+              <p className="text-gray-400 max-w-sm">
+                The Hyperlocal Super-App for Everyday Life. Making mobility, logistics, and commerce
+                seamless across Africa.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-syne font-bold text-white mb-4 text-lg">Quick Links</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    BeGE Ride
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    BeGE Delivery
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    BeGE Shop
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    About Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-syne font-bold text-white mb-4 text-lg">Company</h4>
+              <ul className="space-y-3 text-gray-400">
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    Partner with Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-brand-orange transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
+            <p>&copy; {new Date().getFullYear()} BeGE Technologies. All rights reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="hover:text-white transition-colors">
+                Twitter / X
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                Instagram
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </footer>
+      );
+
+      // --- Main App Component ---
+      const App = () => {
+        return (
+          <div className="min-h-screen bg-brand-dark selection:bg-brand-orange selection:text-white">
+            <Navbar />
+            <Hero />
+            <Services />
+            <Stats />
+            <WhyBeGE />
+            <Testimonials />
+            <CTASplit />
+            <Footer />
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
